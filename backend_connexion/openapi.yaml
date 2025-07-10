@@ -1,0 +1,171 @@
+#set to open api spec
+openapi: 3.0.0
+
+# Set general info
+info:
+  title: Connexion Example API
+  version: '1.0'
+paths:
+  /health/n_api_calls_left:
+    get:
+      summary: Get number of API calls left
+      operationId: calls.apiCallsLeft
+      responses:
+        '200':
+          description: Number of API calls left
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallsLeftResponse'
+    options:
+      summary: CORS support
+      operationId: calls.options_handler_api_calls
+      responses:
+        '200':
+          description: CORS headers
+
+  /health/n_llm_calls_left:
+    get:
+      summary: Get number of LLM calls left
+      operationId: calls.llmCallsLeft
+      responses:
+        '200':
+          description: Number of LLM calls left
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallsLeftResponse'
+    options:
+      summary: CORS support
+      operationId: calls.options_handler_llm_calls
+      responses:
+        '200':
+          description: CORS headers
+
+  /llm/question:
+    post:
+      summary: Answer a question using LLM
+      operationId: calls.question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/query'
+      responses:
+        '200':
+          description: LLM-generated answer to the question
+          content:
+            application/json:
+              schema:
+                type: object
+    options:
+      summary: CORS support
+      operationId: calls.options_handler_question
+      responses:
+        '200':
+          description: CORS headers
+
+  /llm/contextsearch:
+    post:
+      summary: context
+      operationId: calls.contextsearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/query'
+      responses:
+        '200':
+          description: LLM-generated answer to the question
+          content:
+            application/json:
+              schema:
+                type: object
+    options:
+      summary: CORS support
+      operationId: calls.options_handler_contextsearch
+      responses:
+        '200':
+          description: CORS headers
+
+  /settings:
+    get:
+      summary: Get current settings
+      operationId: calls.get_settings
+      responses:
+        '200':
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+    post:
+      summary: Update settings
+      operationId: calls.update_settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+    options:
+      summary: CORS support
+      operationId: calls.options_handler_settings
+      responses:
+        '200':
+          description: CORS headers
+components:
+  schemas:
+    CallsLeftResponse:
+      type: object
+      title: CallsLeftResponse
+      required:
+        - calls_left
+      properties:
+        calls_left:
+          type: integer
+          title: Calls Left
+
+    answer:
+      type: object
+      title: answer
+      required:
+        - content
+        - role
+      properties:
+        content:
+          type: string
+          title: content
+        role:
+          type: string
+          title: role
+
+    query:
+      type: object
+      title: query
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          title: query
+
+    Settings:
+      type: object
+      title: Settings
+      properties:
+        n_chunks:
+          type: integer
+          title: Chunks
+        developer:
+          type: boolean
+          title: Developer settings

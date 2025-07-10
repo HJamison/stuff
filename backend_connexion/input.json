@@ -1,0 +1,584 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Hexegic RAG API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/semantic_query": {
+            "get": {
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Return the top n semantically similar passages of text.",
+                "description": "This endpoint performs a semantic query to retrieve the most relevant text chunks from the database based on the user's input. \n    You can optionally filter by document IDs to limit the search scope.",
+                "operationId": "semantic_query_semantic_query_get",
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Query"
+                        },
+                        "example": "What are the allies of the UK?"
+                    },
+                    {
+                        "name": "n_chunks_to_return",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 10,
+                            "minimum": 1,
+                            "default": 5,
+                            "title": "N Chunks To Return"
+                        }
+                    },
+                    {
+                        "name": "document_ids",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Document Ids"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SemanticQueryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/llm_contextual_search": {
+            "post": {
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Perform semantic search and then summarise with an LLM.",
+                "description": "This endpoint first performs a semantic search to retrieve relevant text chunks from the database,\n    then summarises this context using a large language model (LLM). The text chunks are also returned as\n    a single passage of text, separated by two new line characters. Although up to 10 chunks of text can\n    be queried, only 2000 tokens worth of data can be passed to the LLM. Optionally, develop mode can mock the response \n    and not incur an LLM call.",
+                "operationId": "llm_contextual_search_llm_contextual_search_post",
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Query"
+                        },
+                        "example": "What are the allies of the UK?"
+                    },
+                    {
+                        "name": "n_chunks_to_return",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 10,
+                            "minimum": 1,
+                            "default": 5,
+                            "title": "N Chunks To Return"
+                        }
+                    },
+                    {
+                        "name": "document_ids",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer"
+                                    }
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Document Ids"
+                        }
+                    },
+                    {
+                        "name": "develop_mode",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Develop Mode"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ChatHistoryRequest"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ],
+                                "title": "Chat History"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LLMResponseWithContext"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/llm_regular_question": {
+            "post": {
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Ask a question to the LLM (no semantic searching).",
+                "description": "This endpoint allows the user to ask a question without performing a semantic search. The LLM\n    will generate a response based on the provided query and chat history. Only 2000 tokens worth of chat history is sent to the LLM.\n    Optionally, develop mode can mock the response and not incur an LLM call.",
+                "operationId": "llm_regular_question_llm_regular_question_post",
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Query"
+                        },
+                        "example": "What are the allies of the UK?"
+                    },
+                    {
+                        "name": "develop_mode",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Develop Mode"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "anyOf": [
+                                    {
+                                        "$ref": "#/components/schemas/ChatHistoryRequest"
+                                    },
+                                    {
+                                        "type": "null"
+                                    }
+                                ],
+                                "title": "Chat History"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LLMResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get_all_document_info": {
+            "get": {
+                "tags": [
+                    "Database Information"
+                ],
+                "summary": "Return document ids, titles, and URLs from the database.",
+                "description": "This endpoint retrieves basic metadata (ID, title, and URL) of all documents from the database.",
+                "operationId": "get_all_document_info_get_all_document_info_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentListResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ]
+            }
+        },
+        "/n_api_calls_left": {
+            "get": {
+                "tags": [
+                    "Usage"
+                ],
+                "summary": "Returns the number of API calls left for the user associated with the given API key.",
+                "operationId": "n_api_calls_left_n_api_calls_left_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CallsLeftResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ]
+            }
+        },
+        "/n_llm_calls_left": {
+            "get": {
+                "tags": [
+                    "Usage"
+                ],
+                "summary": "Returns the number of LLM calls left for the user associated with the given API key.",
+                "operationId": "n_llm_calls_left_n_llm_calls_left_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CallsLeftResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "APIKeyHeader": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CallsLeftResponse": {
+                "properties": {
+                    "calls_left": {
+                        "type": "integer",
+                        "title": "Calls Left"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "calls_left"
+                ],
+                "title": "CallsLeftResponse"
+            },
+            "ChatHistoryRequest": {
+                "properties": {
+                    "chat_history": {
+                        "items": {
+                            "$ref": "#/components/schemas/Message"
+                        },
+                        "type": "array",
+                        "title": "Chat History",
+                        "example": [
+                            {
+                                "content": "You are a helpful assistant.",
+                                "role": "system"
+                            },
+                            {
+                                "content": "What is the weather today?",
+                                "role": "user"
+                            },
+                            {
+                                "content": "The weather is sunny and warm.",
+                                "role": "assistant"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "chat_history"
+                ],
+                "title": "ChatHistoryRequest"
+            },
+            "Document": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Url"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "title",
+                    "url"
+                ],
+                "title": "Document"
+            },
+            "DocumentListResponse": {
+                "properties": {
+                    "documents": {
+                        "items": {
+                            "$ref": "#/components/schemas/Document"
+                        },
+                        "type": "array",
+                        "title": "Documents"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "documents"
+                ],
+                "title": "DocumentListResponse"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LLMResponse": {
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/Message"
+                    },
+                    "assistant": {
+                        "$ref": "#/components/schemas/Message"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user",
+                    "assistant"
+                ],
+                "title": "LLMResponse"
+            },
+            "LLMResponseWithContext": {
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/Message"
+                    },
+                    "assistant": {
+                        "$ref": "#/components/schemas/Message"
+                    },
+                    "context": {
+                        "type": "string",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user",
+                    "assistant",
+                    "context"
+                ],
+                "title": "LLMResponseWithContext"
+            },
+            "Message": {
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "title": "Role"
+                    },
+                    "content": {
+                        "type": "string",
+                        "title": "Content"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "title": "Message"
+            },
+            "SemanticQueryResponse": {
+                "properties": {
+                    "results": {
+                        "items": {
+                            "$ref": "#/components/schemas/SemanticResult"
+                        },
+                        "type": "array",
+                        "title": "Results"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "results"
+                ],
+                "title": "SemanticQueryResponse"
+            },
+            "SemanticResult": {
+                "properties": {
+                    "chunk": {
+                        "type": "string",
+                        "title": "Chunk"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Url"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "chunk",
+                    "title",
+                    "url"
+                ],
+                "title": "SemanticResult"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        },
+        "securitySchemes": {
+            "APIKeyHeader": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-api-key"
+            }
+        }
+    }
+}

@@ -1,0 +1,53 @@
+<script setup>
+import Chatbox from './components/chatbox.vue';
+import Counter from './components/counter.vue';
+import CounterLLM from './components/counterLLM.vue';
+import HelloWorld from './components/HelloWorld.vue'
+import Settings from './components/settings.vue';
+import TheWelcome from './components/TheWelcome.vue'
+</script>
+
+<template>
+  <header>
+    <img alt="hexegic logo" class="logo" src="./assets/hexegic.png" width="80" height="80" />
+
+    <div class="wrapper">
+      <Chatbox/>
+    </div>
+  </header>
+
+  <main>
+    <Counter />
+    <CounterLLM />
+
+  </main>
+</template>
+
+<style scoped>
+header {
+  line-height: 1.5;
+}
+
+.logo {
+  display: block;
+  margin: 0 auto 2rem;
+}
+
+@media (min-width: 1024px) {
+  header {
+    display: flex;
+    place-items: center;
+    padding-right: calc(var(--section-gap) / 2);
+  }
+
+  .logo {
+    margin: 0 2rem 0 0;
+  }
+
+  header .wrapper {
+    display: flex;
+    place-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+</style>
